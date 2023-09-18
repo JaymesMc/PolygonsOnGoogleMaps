@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" href="css/leaflet.css">
+  <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+  <link rel="stylesheet" href="css/qgis2web.css">
+  <link rel="stylesheet" href="css/fontawesome-all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jerusalem Quarters</title>
+  <style>
+    #map {
+      height: 800px;
+      width: 100%;
+      z-index: 400;
+    }
+
+    #checkbox-container {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background-color: white;
+      padding: 10px;
+      z-index: 1000;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="checkbox-container">
+    <label for="toggleJewishPolygon">Jewish Quarter</label>
+    <input type="checkbox" id="toggleJewishPolygon">
+    <p>
+      <label for="toggleMuslimPolygon">Muslim Quarter</label>
+      <input type="checkbox" id="toggleMuslimPolygon">
+    </p>
+    <p>
+      <label for="toggleChristianPolygon">Christian Quarter</label>
+      <input type="checkbox" id="toggleChristianPolygon">
+    </p>
+    <p>
+      <label for="toggleArmenianPolygon">Armenian Quarter</label>
+      <input type="checkbox" id="toggleArmenianPolygon">
+    </p>
+  </div>
+
+  <div id="directions-panel"></div>
+
+  <div id="map"></div>
+
+  <script src="js/qgis2web_expressions.js"></script>
+  <script src="js/leaflet.js"></script>
+  <script src="js/L.Control.Locate.min.js"></script>
+  <script src="js/multi-style-layer.js"></script>
+  <script src="js/leaflet.rotatedMarker.js"></script>
+  <script src="js/leaflet.pattern.js"></script>
+  <script src="js/leaflet-hash.js"></script>
+  <script src="js/Autolinker.min.js"></script>
+  <script src="js/rbush.min.js"></script>
+  <script src="js/labelgun.min.js"></script>
+  <script src="js/labels.js"></script>
+  <script src="data/Oldcityquarters_3.js"></script>
+  <script src="data/Churches_4.js"></script>
+  <script src="data/ViaDolorosa_5.js"></script>
+  <script src="data/ViaDolorosastations_6.js"></script>
+
+  <script>
+    let map;
+    let directionsService;
+    let directionsDisplay;
+    let userLocationMarker;
+    let destinationLocation;
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: {
+          lat: 31.778304158704838,
+          lng: 35.232861234250215
+        },
+        zoom: 16,
+        zIndex: 400,
+      });
+
+      directionsService = new google.maps.DirectionsService();
+      directionsDisplay = new google.maps.DirectionsRenderer({
+        map: map,
+        panel: document.getElementById('directions-panel'),
+      });
+
+      directionsDisplay.setMap(map);
+      directionsDisplay.setPanel(document.getElementById('directions-panel'));
+
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(function(position) {
+          const userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+
+          if (!userLocationMarker) {
+            map.setCenter(userLocation);
+          }
+
+          if (!userLocationMarker) {
+            userLocationMarker = new google.maps.Marker({
+              position: userLocation,
+              map: map,
+              title: 'Your Location'
+            });
+          } else {
+            userLocationMarker.setPosition(userLocation);
+          }
+
+          if (destinationLocation) {
+            calculateAndDisplayRoute(userLocation, destinationLocation);
+          }
+        }, null, {
+          enableHighAccuracy: true,
+          maximumAge: 5000,
+          timeout: 10000
+        });
+
+        let destinationLocation = null;
+
+        map.addListener('click', function(event) {
+          destinationLocation = event.latLng;
+          calculateAndDisplayRoute(userLocationMarker.getPosition(), destinationLocation);
+        });
+      }
+    }
+
+    function calculateAndDisplayRoute(origin, destination) {
+      const request = {
+        origin: origin,
+        destination: destination,
+        travelMode: 'DRIVING'
+      };
+
+      directionsService.route(request, function(result, status) {
+        if (status === 'OK') {
+          directionsDisplay.setDirections(result);
+        }
+      });
+    }
+         // Muslim quarter polygon
+         const muslimPolygonCoordinates = [
+{ lat: 31.776150000000154, lng: 35.237601 },
+{ lat: 31.775684246199312, lng: 35.2346618493223 },
+{ lat: 31.777292438505942, lng: 35.234228906107369 },
+{ lat: 31.777006903185391, lng: 35.233173020285996 },
+{ lat: 31.776899827440001, lng: 35.232480002268055 },
+{ lat: 31.776786803042295, lng: 35.231436013751818 },
+{ lat: 31.776733265169604, lng: 35.231403296162966 },
+{ lat: 31.776704632791304, lng: 35.231143839918595 },
+{ lat: 31.776825469283743, lng: 35.231082068927279 },
+{ lat: 31.776824664581422, lng: 35.230930617050213 },
+{ lat: 31.777149015853418, lng: 35.230900791645922 },
+{ lat: 31.778117486101454, lng: 35.230816310980011 },
+{ lat: 31.778227983087064, lng: 35.230834367036181 },
+{ lat: 31.779127419347322, lng: 35.2308200902701 },
+{ lat: 31.780048270756428, lng: 35.230734429673994 },
+{ lat: 31.780954845399769, lng: 35.230659476652299 },
+{ lat: 31.781270599339319, lng: 35.230699741123658 },
+{ lat: 31.781650358187413, lng: 35.230433139538782 },
+{ lat: 31.781815800048872, lng: 35.230356134925955 },
+{ lat: 31.781978816700349, lng: 35.230663224303356 },
+{ lat: 31.782035923764521, lng: 35.230663224303356 },
+{ lat: 31.782107307594774, lng: 35.2307964741197 },
+{ lat: 31.782187861617285, lng: 35.230786000000386 },
+{ lat: 31.782251753026355, lng: 35.230791596328139 },
+{ lat: 31.782226280645002, lng: 35.230867857949903 },
+{ lat: 31.782283387709167, lng: 35.23096779531209 },
+{ lat: 31.782339861617181, lng: 35.23095800000025 },
+{ lat: 31.782473744589609, lng: 35.231153393270446 },
+{ lat: 31.782507057043563, lng: 35.231162911114595 },
+{ lat: 31.782581861617338, lng: 35.231325000000147 },
+{ lat: 31.782597476561829, lng: 35.231424651825222 },
+{ lat: 31.78268186161716, lng: 35.231647000000187 },
+{ lat: 31.782535610575795, lng: 35.231967168934567 },
+{ lat: 31.782626030093901, lng: 35.232409748681683 },
+{ lat: 31.782749762066214, lng: 35.232414507603622 },
+{ lat: 31.782863976194466, lng: 35.232790462442587 },
+{ lat: 31.782911565414818, lng: 35.232814257052667 },
+{ lat: 31.782944877868754, lng: 35.232961783635034 },
+{ lat: 31.782897288648652, lng: 35.232961783635034 },
+{ lat: 31.783011502776926, lng: 35.233490023978256 },
+{ lat: 31.78328300919198, lng: 35.234645599301508 },
+{ lat: 31.783799035048897, lng: 35.236632854721599 },
+{ lat: 31.783263725643529, lng: 35.236745126634439 },
+{ lat: 31.78267837823595, lng: 35.236811751542668 },
+{ lat: 31.782021646998505, lng: 35.236921206749031 },
+{ lat: 31.781769424131845, lng: 35.236930724592938 },
+{ lat: 31.781736111677692, lng: 35.236864099684851 },
+{ lat: 31.781574308329354, lng: 35.236873617528786 },
+{ lat: 31.781474370966958, lng: 35.236954519203024 },
+{ lat: 31.78124118378846, lng: 35.236921206749031 },
+{ lat: 31.780829166667175, lng: 35.236958415718618 },
+{ lat: 31.780417890280603, lng: 35.237030661955295 },
+{ lat: 31.779908685625244, lng: 35.237073492253465 },
+{ lat: 31.778999731521203, lng: 35.237216259913893 },
+{ lat: 31.778595223150095, lng: 35.237263849133896 }
+
+
+        ];
+
+            muslimPolygon = new google.maps.Polygon({
+                paths: muslimPolygonCoordinates,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35,
+                map: map,
+                clickable: true // Polygon is initially clickable
+            });
+
+            // Add an event listener to the checkbox
+            const toggleMuslimCheckbox = document.getElementById('toggleMuslimPolygon');
+            toggleMuslimCheckbox.addEventListener('change', function() {
+                // Update the polygon's clickability based on the checkbox state
+                muslimPolygon.setOptions({ clickable: toggleMuslimCheckbox.checked });
+            });
+        
+// Christian quarter polygon
+    const christianPolygonCoordinates = [
+    [
+{ lat: 31.776824664581309, lng: 35.230930617050113 },
+{ lat: 31.776733265169604, lng: 35.229571111188264 },
+{ lat: 31.776742188148411, lng: 35.228762094446331 },
+{ lat: 31.776719000000291, lng: 35.227930000000278 },
+{ lat: 31.776590481694889, lng: 35.227577148515429 },
+{ lat: 31.776663100813241, lng: 35.227493782243378 },
+{ lat: 31.776862975537835, lng: 35.227365291349038 },
+{ lat: 31.777329349894945, lng: 35.226789461785536 },
+{ lat: 31.777914697302432, lng: 35.226051828873686 },
+{ lat: 31.778114219631703, lng: 35.225774348859957 },
+{ lat: 31.778200232622986, lng: 35.225804364929004 },
+{ lat: 31.778215179201005, lng: 35.225706844969281 },
+{ lat: 31.778323964595423, lng: 35.225728222176841 },
+{ lat: 31.778474954363546, lng: 35.225577339941566 },
+{ lat: 31.778740861617003, lng: 35.225767000000118 },
+{ lat: 31.778969861617067, lng: 35.226027000000123 },
+{ lat: 31.779278630215813, lng: 35.225755274366001 },
+{ lat: 31.779356445758861, lng: 35.225904609696315 },
+{ lat: 31.779343545172839, lng: 35.225944355181319 },
+{ lat: 31.779346426505239, lng: 35.225950261361049 },
+{ lat: 31.779418608959872, lng: 35.226248927464631 },
+{ lat: 31.779636200369914, lng: 35.226599826643671 },
+{ lat: 31.779698235473763, lng: 35.226705264399961 },
+{ lat: 31.779651703836606, lng: 35.226751390409298 },
+{ lat: 31.780062861617104, lng: 35.227325000000214 },
+{ lat: 31.779749861617187, lng: 35.227624 },
+{ lat: 31.780076943209561, lng: 35.22806734614143 },
+{ lat: 31.780216861617159, lng: 35.228257000000106 },
+{ lat: 31.780251328010038, lng: 35.228336111439489 },
+{ lat: 31.780308435074147, lng: 35.228269486531097 },
+{ lat: 31.780394095670449, lng: 35.228393218503498 },
+{ lat: 31.780336988606329, lng: 35.228474120177701 },
+{ lat: 31.781053861617153, lng: 35.229371000000178 },
+{ lat: 31.781091011500749, lng: 35.2293891527844 },
+{ lat: 31.781207861617069, lng: 35.229471000000203 },
+{ lat: 31.781250701632551, lng: 35.229406868892056 },
+{ lat: 31.781312567618535, lng: 35.229530600864258 },
+{ lat: 31.781286861617165, lng: 35.229579000000193 },
+{ lat: 31.781412504980832, lng: 35.229673368524622 },
+{ lat: 31.78133636222876, lng: 35.229773305887015 },
+{ lat: 31.781560031563252, lng: 35.230115948271873 },
+{ lat: 31.781669267196712, lng: 35.230041736793289 },
+{ lat: 31.781650451081447, lng: 35.230120707193812 },
+{ lat: 31.781664727847648, lng: 35.230211126712092 },
+{ lat: 31.781602861861248, lng: 35.230287269464256 },
+{ lat: 31.781645692159337, lng: 35.230363412216427 },
+{ lat: 31.781607620783412, lng: 35.230377688982507 },
+{ lat: 31.781650358187306, lng: 35.230433139538619 },
+{ lat: 31.781270599339319, lng: 35.230699741123594 },
+{ lat: 31.780954845399659, lng: 35.230659476652136 },
+{ lat: 31.780048270756428, lng: 35.230734429673895 },
+{ lat: 31.779127419347208, lng: 35.230820090270001 },
+{ lat: 31.778227983086889, lng: 35.230834367036081 },
+{ lat: 31.778117486101284, lng: 35.230816310979939 },
+{ lat: 31.777149015853418, lng: 35.230900791645723 },
+{ lat: 31.776824664581309, lng: 35.230930617050113 }
+]
+
+        ];
+
+        christianPolygon = new google.maps.Polygon({
+                paths: christianPolygonCoordinates,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35,
+                map: map,
+                clickable: true // Polygon is initially clickable
+            });
+
+            // Add an event listener to the checkbox
+            const toggleChristianCheckbox = document.getElementById('togglechristianPolygon');
+            toggleChristianCheckbox.addEventListener('change', function() {
+                // Update the polygon's clickability based on the checkbox state
+                christianPolygon.setOptions({ clickable: toggleChristianCheckbox.checked });
+            });
+
+// Armenian quarter
+    const armenianPolygonCoordinates = [
+    [
+    { "lat": 31.776590481694889, "lng": 35.227577148515429 },
+{ "lat": 31.776719000000291, "lng": 35.227930000000278 },
+{ "lat": 31.776742188148411, "lng": 35.228762094446331 },
+{ "lat": 31.776733265169604, "lng": 35.229571111188264 },
+{ "lat": 31.776824664581309, "lng": 35.230930617050113 },
+{ "lat": 31.776772000000157, "lng": 35.230830000000111 },
+{ "lat": 31.776714864132526, "lng": 35.230830702490238 },
+{ "lat": 31.776381740809523, "lng": 35.230863821523918 },
+{ "lat": 31.775833055584716, "lng": 35.230802244312599 },
+{ "lat": 31.774997000000237, "lng": 35.230777000000266 },
+{ "lat": 31.774897000000117, "lng": 35.23068700000011 },
+{ "lat": 31.772998969174239, "lng": 35.230733024250199 },
+{ "lat": 31.772903552424225, "lng": 35.230096912583889 },
+{ "lat": 31.77284644536013, "lng": 35.229687645290902 },
+{ "lat": 31.772945470022194, "lng": 35.229416488371662 },
+{ "lat": 31.772960659488398, "lng": 35.22865495921436 },
+{ "lat": 31.772946382722274, "lng": 35.228650200292257 },
+{ "lat": 31.77294162380031, "lng": 35.228545504007933 },
+{ "lat": 31.772974936254315, "lng": 35.228540745085994 },
+{ "lat": 31.772965418410347, "lng": 35.228279004375302 },
+{ "lat": 31.772955900566267, "lng": 35.227707933733832 },
+{ "lat": 31.773103427148641, "lng": 35.227712692655835 },
+{ "lat": 31.773165293134635, "lng": 35.227779317564099 },
+{ "lat": 31.773388962469319, "lng": 35.227779317564099 },
+{ "lat": 31.773393721391258, "lng": 35.227679380201678 },
+{ "lat": 31.773493658753583, "lng": 35.227679380201678 },
+{ "lat": 31.77352221228568, "lng": 35.227774558641862 },
+{ "lat": 31.773931479578593, "lng": 35.227736487265766 },
+{ "lat": 31.773940997422738, "lng": 35.227674621279668 },
+{ "lat": 31.774288398729549, "lng": 35.227693656967759 },
+{ "lat": 31.774359782559774, "lng": 35.227707933733832 },
+{ "lat": 31.774397853935902, "lng": 35.227688898045756 },
+{ "lat": 31.774421648545928, "lng": 35.227703174811836 },
+{ "lat": 31.774431166389871, "lng": 35.227603237449642 },
+{ "lat": 31.774583451894184, "lng": 35.227603237449642 },
+{ "lat": 31.774607246504203, "lng": 35.227707933733832 },
+{ "lat": 31.775283013430034, "lng": 35.227769799719923 },
+{ "lat": 31.775606620126844, "lng": 35.227784076486003 },
+{ "lat": 31.775673245034962, "lng": 35.227784076486003 },
+{ "lat": 31.775697039644918, "lng": 35.227546130385562 },
+{ "lat": 31.775854084071398, "lng": 35.227574683917489 },
+{ "lat": 31.775887396525519, "lng": 35.227669862357736 },
+{ "lat": 31.776296663818663, "lng": 35.227755522953842 },
+{ "lat": 31.776534861617133, "lng": 35.227641 },
+{ "lat": 31.776590481694889, "lng": 35.227577148515429 }
+
+    ]
+        ];
+
+        armenianPolygon = new google.maps.Polygon({
+                paths: armenianPolygonCoordinates,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35,
+                map: map,
+                clickable: true // Polygon is initially clickable
+            });
+
+            // Add an event listener to the checkbox
+            const toggleArmenianCheckbox = document.getElementById('togglearmenianPolygon');
+            toggleArmenianCheckbox.addEventListener('change', function() {
+                // Update the polygon's clickability based on the checkbox state
+                armenianPolygon.setOptions({ clickable: toggleArmenianCheckbox.checked });
+            });
+
+// Jewish quarter
+const jewishPolygonCoordinates = [
+    [
+    {lat: 31.776824664581422, lng: 35.230930617050213},
+{lat: 31.776825469283743, lng: 35.231082068927279},
+{lat: 31.776704632791304, lng: 35.231143839918595},
+{lat: 31.776733265169604, lng: 35.231403296162966},
+{lat: 31.776786803042295, lng: 35.231436013751818},
+{lat: 31.776899827440001, lng: 35.232480002268055},
+{lat: 31.777006903185391, lng: 35.233173020285996},
+{lat: 31.777292438505942, lng: 35.234228906107369},
+{lat: 31.775684246199312, lng: 35.2346618493223},
+{lat: 31.775873119759453, lng: 35.2358599671403},
+{lat: 31.77568276287894, lng: 35.235902797438534},
+{lat: 31.775668486112856, lng: 35.235812377920297},
+{lat: 31.775587584438743, lng: 35.235850449296365},
+{lat: 31.775592343360909, lng: 35.235731476246123},
+{lat: 31.77503554948531, lng: 35.235850449296365},
+{lat: 31.774949888889246, lng: 35.235279378654965},
+{lat: 31.774849951526953, lng: 35.234575058197144},
+{lat: 31.774711250137916, lng: 35.233618182352451},
+{lat: 31.774264604119796, lng: 35.23324256003378},
+{lat: 31.773955274188761, lng: 35.232528721732024},
+{lat: 31.773869613592527, lng: 35.232500168199856},
+{lat: 31.773802988684299, lng: 35.232414507603821},
+{lat: 31.773369926781463, lng: 35.232414507603821},
+{lat: 31.773227159121141, lng: 35.231686392535984},
+{lat: 31.773112944992569, lng: 35.231258089555006},
+{lat: 31.77307011469459, lng: 35.230948759624134},
+{lat: 31.77303204331864, lng: 35.230953518546009},
+{lat: 31.772998969174353, lng: 35.230733024250299},
+{lat: 31.774897000000223, lng: 35.23068700000011},
+{lat: 31.774997000000237, lng: 35.230777000000266},
+{lat: 31.775833055584947, lng: 35.230802244312727},
+{lat: 31.776381740809523, lng: 35.230863821523982},
+{lat: 31.7767148641327, lng: 35.230830702490408},
+{lat: 31.776772000000271, lng: 35.230830000000246},
+{lat: 31.776824664581422, lng: 35.230930617050213}
+
+
+]
+        ];
+        
+        jewishPolygon = new google.maps.Polygon({
+                paths: jewishPolygonCoordinates,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35,
+                map: map,
+                clickable: true // Polygon is initially clickable
+            });
+
+            // Add an event listener to the checkbox
+            const toggleJewishCheckbox = document.getElementById('togglejewishPolygon');
+            toggleJewishCheckbox.addEventListener('change', function() {
+                // Update the polygon's clickability based on the checkbox state
+                jewishPolygon.setOptions({ clickable: toggleJewishCheckbox.checked });
+            });    
+
+    </script>
+  <!-- Removed my API key -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=MY-KEY-&libraries=places,directions&callback=initMap"></script>
+</body>
+</html>
